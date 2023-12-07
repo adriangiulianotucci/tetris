@@ -187,7 +187,7 @@ export default function App() {
   }, [velocity, move]);
 
   return (
-    <div className="h-screen flex justify-center items-center">
+    <div className="h-[calc(100dvh)] flex justify-center items-center">
       <Board
         cols={cols}
         rows={rows}
