@@ -45,7 +45,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [velocity]);
 
-  function move(direction) {
+  const move = (direction) => {
     const activeTetrominos = getTetrominos({ status: "active" });
     const inactiveTetrominos = getTetrominos({ status: "inactive" });
 
@@ -61,15 +61,15 @@ export default function App() {
     } else {
       fireNewTetromino();
     }
-  }
+  };
 
-  function fireNewTetromino() {
+  const fireNewTetromino = () => {
     const newTetromino = getRandomTetromino();
     const newTetrominos = [...tetrominos, ...newTetromino];
     setTetrominos(newTetrominos);
-  }
+  };
 
-  function getNewActiveTetrominos({ direction, activeTetrominos }) {
+  const getNewActiveTetrominos = ({ direction, activeTetrominos }) => {
     switch (direction) {
       case "down":
         return canMove({ activeTetrominos, direction })
@@ -101,9 +101,9 @@ export default function App() {
       default:
         return activeTetrominos;
     }
-  }
+  };
 
-  function canMove({ activeTetrominos, direction }) {
+  const canMove = ({ activeTetrominos, direction }) => {
     let isNextToBorder, isNextToInactive;
 
     switch (direction) {
@@ -167,11 +167,12 @@ export default function App() {
       default:
         return true;
     }
-  }
+  };
 
-  function getTetrominos({ status }) {
+  const getTetrominos = ({ status }) => {
+    console.log(tetrominos);
     return tetrominos.filter((tetromino) => tetromino.status === status);
-  }
+  };
 
   return (
     <>

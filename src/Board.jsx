@@ -16,7 +16,9 @@ export default function Board(props) {
     <div className="flex flex-col">
       {[...Array(rows + hiddenRows)].map((row, rowIndex) => (
         <div
-          className={`flex justify-center ${rowIndex < hiddenRows && "hidden"}`}
+          className={`flex justify-center ${
+            rowIndex < hiddenRows && "opacity-50"
+          }`}
           key={rowIndex}
         >
           {[...Array(cols)].map((col, colIndex) => (
