@@ -37,14 +37,14 @@ Board.propTypes = {
   cols: PropTypes.number,
   rows: PropTypes.number,
   hiddenRows: PropTypes.number,
-  tetrominos: PropTypes.shape([
-    {
+  tetrominos: PropTypes.arrayOf(
+    PropTypes.shape({
       rowIndex: PropTypes.number,
       colIndex: PropTypes.number,
       color: PropTypes.string,
       status: PropTypes.string,
-    },
-  ]),
+    })
+  ),
 };
 
 export default Board;
