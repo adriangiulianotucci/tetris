@@ -1,4 +1,6 @@
-export default function Board(props) {
+import PropTypes from "prop-types";
+
+function Board(props) {
   const { cols, rows, hiddenRows, tetrominos } = props;
 
   function getColor({ rowIndex, colIndex }) {
@@ -32,3 +34,19 @@ export default function Board(props) {
     </div>
   );
 }
+
+Board.propTypes = {
+  cols: PropTypes.number,
+  rows: PropTypes.number,
+  hiddenRows: PropTypes.number,
+  tetrominos: PropTypes.shape([
+    {
+      rowIndex: PropTypes.number,
+      colIndex: PropTypes.number,
+      color: PropTypes.string,
+      status: PropTypes.string,
+    },
+  ]),
+};
+
+export default Board;

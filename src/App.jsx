@@ -187,31 +187,13 @@ export default function App() {
   }, [velocity, move]);
 
   return (
-    <>
-      <button
-        onClick={() => move("left")}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Left
-      </button>
-      <button
-        onClick={() => move("down")}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Down
-      </button>
-      <button
-        onClick={() => move("right")}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Right
-      </button>
+    <div className="h-screen flex justify-center items-center">
       <Board
         cols={cols}
         rows={rows}
         hiddenRows={hiddenRows}
         tetrominos={tetrominos}
       />
-    </>
+    </div>
   );
 }
