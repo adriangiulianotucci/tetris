@@ -9,7 +9,7 @@ function Board(props) {
     );
 
     if (tetromino) {
-      return tetromino.color;
+      return `${tetromino.color} shadow-inner`;
     }
     return "bg-slate-500";
   }

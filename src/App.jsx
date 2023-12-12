@@ -16,124 +16,136 @@ export default function App() {
     setTetrominos(newTetrominos);
   }, [tetrominos]);
 
-  const canMove = useCallback(
-    ({ activeTetrominos, direction }) => {
-      switch (direction) {
-        case "down": {
-          const bottomIndex = activeTetrominos.reduce(
-            (acc, activeTetromino) => Math.max(acc, activeTetromino.rowIndex),
-            0
-          );
+  const rotateTetrominos = useCallback(({ tetrominos }) => {
+    const angle = -Math.PI / 2;
 
-          const isNextToBorder = bottomIndex + 1 >= rows + hiddenRows;
+    const { rowIndex: centerRowIndex, colIndex: centerColIndex } =
+      tetrominos.find((tetromino) => tetromino.center);
 
-          const isNextToInactive = activeTetrominos.some((activeTetromino) =>
-            tetrominos.some(
-              (tetromino) =>
-                activeTetromino.rowIndex + 1 === tetromino.rowIndex &&
-                activeTetromino.colIndex === tetromino.colIndex &&
-                tetromino.status === "inactive"
-            )
-          );
-
-          return !isNextToInactive && !isNextToBorder;
-        }
-
-        case "left": {
-          const leftIndex = activeTetrominos.reduce(
-            (acc, activeTetromino) => Math.min(acc, activeTetromino.colIndex),
-            cols
-          );
-
-          const isNextToBorder = leftIndex === 0;
-
-          const isNextToInactive = activeTetrominos.some((activeTetromino) =>
-            tetrominos.some(
-              (tetromino) =>
-                activeTetromino.rowIndex === tetromino.rowIndex &&
-                activeTetromino.colIndex - 1 === tetromino.colIndex &&
-                tetromino.status === "inactive"
-            )
-          );
-
-          return !isNextToInactive && !isNextToBorder;
-        }
-
-        case "right": {
-          const rightIndex = activeTetrominos.reduce(
-            (acc, activeTetromino) => Math.max(acc, activeTetromino.colIndex),
-            0
-          );
-
-          const isNextToBorder = rightIndex + 1 >= cols;
-
-          const isNextToInactive = activeTetrominos.some((activeTetromino) =>
-            tetrominos.some(
-              (tetromino) =>
-                activeTetromino.rowIndex === tetromino.rowIndex &&
-                activeTetromino.colIndex + 1 === tetromino.colIndex &&
-                tetromino.status === "inactive"
-            )
-          );
-
-          return !isNextToInactive && !isNextToBorder;
-        }
-
-        default:
-          return true;
-      }
-    },
-    [cols, rows, hiddenRows, tetrominos]
-  );
+    return tetrominos.map((tetromino) => {
+      const newRowIndex = Math.round(
+        Math.cos(angle) * (tetromino.rowIndex - centerRowIndex) -
+          Math.sin(angle) * (tetromino.colIndex - centerColIndex) +
+          centerRowIndex
+      );
+      const newColIndex = Math.round(
+        Math.sin(angle) * (tetromino.rowIndex - centerRowIndex) +
+          Math.cos(angle) * (tetromino.colIndex - centerColIndex) +
+          centerColIndex
+      );
+      return { ...tetromino, rowIndex: newRowIndex, colIndex: newColIndex };
+    });
+  }, []);
 
   const getNewActiveTetrominos = useCallback(
     ({ direction, activeTetrominos }) => {
       switch (direction) {
         case "down":
-          return canMove({ activeTetrominos, direction })
-            ? activeTetrominos.map((activeTetromino) => ({
-                ...activeTetromino,
-                rowIndex: activeTetromino.rowIndex + 1,
-              }))
-            : activeTetrominos.map((activeTetromino) => ({
-                ...activeTetromino,
-                status: "inactive",
-              }));
+          return activeTetrominos.map((activeTetromino) => ({
+            ...activeTetromino,
+            rowIndex: activeTetromino.rowIndex + 1,
+          }));
 
         case "left":
-          return canMove({ activeTetrominos, direction })
-            ? activeTetrominos.map((activeTetromino) => ({
-                ...activeTetromino,
-                colIndex: activeTetromino.colIndex - 1,
-              }))
-            : activeTetrominos;
+          return activeTetrominos.map((activeTetromino) => ({
+            ...activeTetromino,
+            colIndex: activeTetromino.colIndex - 1,
+          }));
 
         case "right":
-          return canMove({ activeTetrominos, direction })
-            ? activeTetrominos.map((activeTetromino) => ({
-                ...activeTetromino,
-                colIndex: activeTetromino.colIndex + 1,
-              }))
-            : activeTetrominos;
+          return activeTetrominos.map((activeTetromino) => ({
+            ...activeTetromino,
+            colIndex: activeTetromino.colIndex + 1,
+          }));
+
+        case "rotate":
+          return rotateTetrominos({ tetrominos: activeTetrominos });
 
         default:
           return activeTetrominos;
       }
     },
-    [canMove]
+    [rotateTetrominos]
   );
 
-  const getTetrominos = useCallback(
-    ({ status }) => {
-      return tetrominos.filter((tetromino) => tetromino.status === status);
+  const getTetrominos = useCallback(({ tetrominos, status }) => {
+    return tetrominos.filter((tetromino) => tetromino.status === status);
+  }, []);
+
+  const canPlace = useCallback(
+    ({ tetrominos, inactiveTetrominos }) => {
+      const isOutOfBounds = tetrominos.some((tetromino) => {
+        return (
+          tetromino.colIndex < 0 ||
+          tetromino.colIndex >= cols ||
+          tetromino.rowIndex < 0 ||
+          tetromino.rowIndex >= rows + hiddenRows
+        );
+      });
+
+      const isInactive = tetrominos.some((tetromino) =>
+        inactiveTetrominos.some(
+          (inactiveTetromino) =>
+            inactiveTetromino.colIndex === tetromino.colIndex &&
+            inactiveTetromino.rowIndex === tetromino.rowIndex
+        )
+      );
+
+      return !isOutOfBounds && !isInactive;
     },
-    [tetrominos]
+    [cols, rows, hiddenRows]
+  );
+
+  const deleteFullRows = useCallback(
+    ({ tetrominos }) => {
+      const orderedTetrominos = tetrominos.reduce((acc, tetromino) => {
+        if (acc[tetromino.rowIndex]) {
+          acc[tetromino.rowIndex].push(tetromino);
+        } else {
+          acc[tetromino.rowIndex] = [tetromino];
+        }
+        return acc;
+      }, []);
+
+      const fullRowIndexes = orderedTetrominos.reduce(
+        (acc, orderedTetromino, index) => {
+          if (orderedTetromino?.length === cols) {
+            acc.push(index);
+          }
+          return acc;
+        },
+        []
+      );
+
+      console.log(fullRowIndexes);
+
+      if (fullRowIndexes.length) {
+        const newTetrominos = tetrominos
+          .filter((tetromino) => !fullRowIndexes.includes(tetromino.rowIndex))
+          .map((tetromino) => {
+            if (tetromino.rowIndex < Math.min(...fullRowIndexes)) {
+              return {
+                ...tetromino,
+                rowIndex: tetromino.rowIndex + fullRowIndexes.length,
+              };
+            } else {
+              return tetromino;
+            }
+          });
+
+        setTetrominos(newTetrominos);
+      }
+    },
+    [tetrominos, cols]
   );
 
   const move = useCallback(
     (direction) => {
-      const activeTetrominos = getTetrominos({ status: "active" });
-      const inactiveTetrominos = getTetrominos({ status: "inactive" });
+      const activeTetrominos = getTetrominos({ tetrominos, status: "active" });
+      const inactiveTetrominos = getTetrominos({
+        tetrominos,
+        status: "inactive",
+      });
 
       if (activeTetrominos.length) {
         const newActiveTetrominos = getNewActiveTetrominos({
@@ -141,14 +153,40 @@ export default function App() {
           activeTetrominos,
         });
 
-        setTetrominos([...inactiveTetrominos, ...newActiveTetrominos]);
+        const isValid = canPlace({
+          tetrominos: newActiveTetrominos,
+          inactiveTetrominos,
+        });
 
-        // VALIDATE IF ROW COMPLETE
+        if (!isValid) {
+          if (direction === "down") {
+            const newTetrominos = [
+              ...inactiveTetrominos,
+              ...activeTetrominos.map((activeTetromino) => ({
+                ...activeTetromino,
+                status: "inactive",
+              })),
+            ];
+            setTetrominos(newTetrominos);
+            deleteFullRows({ tetrominos: newTetrominos });
+            return;
+          }
+          return;
+        }
+
+        setTetrominos([...inactiveTetrominos, ...newActiveTetrominos]);
       } else {
         fireNewTetromino();
       }
     },
-    [fireNewTetromino, getNewActiveTetrominos, getTetrominos]
+    [
+      tetrominos,
+      fireNewTetromino,
+      getNewActiveTetrominos,
+      getTetrominos,
+      canPlace,
+      deleteFullRows,
+    ]
   );
 
   useEffect(() => {
@@ -157,6 +195,10 @@ export default function App() {
         case "Space":
         case "ArrowDown":
           move("down");
+          break;
+
+        case "ArrowUp":
+          move("rotate");
           break;
 
         case "ArrowLeft":
