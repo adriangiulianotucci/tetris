@@ -136,7 +136,7 @@ export default function App() {
         setTetrominos(newTetrominos);
       }
     },
-    [tetrominos, cols]
+    [cols]
   );
 
   const move = useCallback(
