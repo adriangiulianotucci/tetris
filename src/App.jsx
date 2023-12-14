@@ -3,18 +3,12 @@ import Board from "./Board";
 import { getRandomTetromino } from "./assets/tetrominos/randomTetromino";
 
 export default function App() {
-  const [velocity] = useState(1000);
+  const [velocity, setVelocity] = useState(1000);
   const [rows] = useState(20);
   const [hiddenRows] = useState(3);
   const [cols] = useState(10);
 
   const [tetrominos, setTetrominos] = useState([]);
-
-  const fireNewTetromino = useCallback(() => {
-    const newTetromino = getRandomTetromino();
-    const newTetrominos = [...tetrominos, ...newTetromino];
-    setTetrominos(newTetrominos);
-  }, [tetrominos]);
 
   const rotateTetrominos = useCallback(({ tetrominos }) => {
     const angle = -Math.PI / 2;
@@ -96,7 +90,7 @@ export default function App() {
     [cols, rows, hiddenRows]
   );
 
-  const deleteFullRows = useCallback(
+  const deletedFullRows = useCallback(
     ({ tetrominos }) => {
       const orderedTetrominos = tetrominos.reduce((acc, tetromino) => {
         if (acc[tetromino.rowIndex]) {
@@ -117,76 +111,81 @@ export default function App() {
         []
       );
 
-      console.log(fullRowIndexes);
-
       if (fullRowIndexes.length) {
         const newTetrominos = tetrominos
           .filter((tetromino) => !fullRowIndexes.includes(tetromino.rowIndex))
           .map((tetromino) => {
-            if (tetromino.rowIndex < Math.min(...fullRowIndexes)) {
+            if (tetromino.rowIndex < Math.max(...fullRowIndexes)) {
+              const newRowIndex =
+                fullRowIndexes.length -
+                fullRowIndexes.findIndex(
+                  (fullRowIndex) => tetromino.rowIndex < fullRowIndex
+                );
+
               return {
                 ...tetromino,
-                rowIndex: tetromino.rowIndex + fullRowIndexes.length,
+                rowIndex: tetromino.rowIndex + newRowIndex,
               };
             } else {
               return tetromino;
             }
           });
-
-        setTetrominos(newTetrominos);
+        setVelocity((prevVelocity) => prevVelocity * 0.95);
+        return [...newTetrominos];
       }
+      return [...tetrominos];
     },
     [cols]
   );
 
   const move = useCallback(
     (direction) => {
-      const activeTetrominos = getTetrominos({ tetrominos, status: "active" });
-      const inactiveTetrominos = getTetrominos({
-        tetrominos,
-        status: "inactive",
-      });
+      setTetrominos((prevTetrominos) => {
+        const tetrominos = [...prevTetrominos];
 
-      if (activeTetrominos.length) {
-        const newActiveTetrominos = getNewActiveTetrominos({
-          direction,
-          activeTetrominos,
+        const activeTetrominos = getTetrominos({
+          tetrominos: tetrominos,
+          status: "active",
+        });
+        const inactiveTetrominos = getTetrominos({
+          tetrominos: tetrominos,
+          status: "inactive",
         });
 
-        const isValid = canPlace({
-          tetrominos: newActiveTetrominos,
-          inactiveTetrominos,
-        });
+        if (activeTetrominos.length) {
+          const newActiveTetrominos = getNewActiveTetrominos({
+            direction,
+            activeTetrominos,
+          });
 
-        if (!isValid) {
-          if (direction === "down") {
-            const newTetrominos = [
-              ...inactiveTetrominos,
-              ...activeTetrominos.map((activeTetromino) => ({
-                ...activeTetromino,
-                status: "inactive",
-              })),
-            ];
-            setTetrominos(newTetrominos);
-            deleteFullRows({ tetrominos: newTetrominos });
-            return;
+          const isValid = canPlace({
+            tetrominos: newActiveTetrominos,
+            inactiveTetrominos,
+          });
+
+          if (!isValid) {
+            if (direction === "down") {
+              const newTetrominos = [
+                ...inactiveTetrominos,
+                ...activeTetrominos.map((activeTetromino) => ({
+                  ...activeTetromino,
+                  status: "inactive",
+                })),
+              ];
+
+              return [...deletedFullRows({ tetrominos: newTetrominos })];
+            }
+            return [...tetrominos];
           }
-          return;
-        }
 
-        setTetrominos([...inactiveTetrominos, ...newActiveTetrominos]);
-      } else {
-        fireNewTetromino();
-      }
+          return [...inactiveTetrominos, ...newActiveTetrominos];
+        } else {
+          const newRandomTetromino = getRandomTetromino();
+          return [...inactiveTetrominos, ...newRandomTetromino];
+        }
+      });
     },
-    [
-      tetrominos,
-      fireNewTetromino,
-      getNewActiveTetrominos,
-      getTetrominos,
-      canPlace,
-      deleteFullRows,
-    ]
+    [getNewActiveTetrominos, getTetrominos, canPlace, deletedFullRows]
   );
 
   useEffect(() => {
