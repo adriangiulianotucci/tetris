@@ -5,7 +5,7 @@ import { getRandomTetromino } from "./assets/tetrominos/randomTetromino";
 export default function App() {
   const [velocity, setVelocity] = useState(1000);
   const [rows] = useState(20);
-  const [hiddenRows] = useState(3);
+  const [hiddenRows] = useState(2);
   const [cols] = useState(10);
 
   const [tetrominos, setTetrominos] = useState([]);
@@ -67,8 +67,8 @@ export default function App() {
   }, []);
 
   const canPlace = useCallback(
-    ({ tetrominos, inactiveTetrominos }) => {
-      const isOutOfBounds = tetrominos.some((tetromino) => {
+    ({ newTetrominos, inactiveTetrominos }) => {
+      const isOutOfBounds = newTetrominos.some((tetromino) => {
         return (
           tetromino.colIndex < 0 ||
           tetromino.colIndex >= cols ||
@@ -77,7 +77,7 @@ export default function App() {
         );
       });
 
-      const isInactive = tetrominos.some((tetromino) =>
+      const isInactive = newTetrominos.some((tetromino) =>
         inactiveTetrominos.some(
           (inactiveTetromino) =>
             inactiveTetromino.colIndex === tetromino.colIndex &&
@@ -159,29 +159,29 @@ export default function App() {
           });
 
           const isValid = canPlace({
-            tetrominos: newActiveTetrominos,
+            newTetrominos: newActiveTetrominos,
             inactiveTetrominos,
           });
 
           if (!isValid) {
             if (direction === "down") {
-              const newTetrominos = [
+              const placedTetrominos = [
                 ...inactiveTetrominos,
                 ...activeTetrominos.map((activeTetromino) => ({
                   ...activeTetromino,
                   status: "inactive",
                 })),
               ];
-
-              return [...deletedFullRows({ tetrominos: newTetrominos })];
+              return [...deletedFullRows({ tetrominos: placedTetrominos })];
             }
             return [...tetrominos];
           }
 
           return [...inactiveTetrominos, ...newActiveTetrominos];
         } else {
-          const newRandomTetromino = getRandomTetromino();
-          return [...inactiveTetrominos, ...newRandomTetromino];
+          const newRandomTetrominos = getRandomTetromino();
+
+          return [...inactiveTetrominos, ...newRandomTetrominos];
         }
       });
     },
